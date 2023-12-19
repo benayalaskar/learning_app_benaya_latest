@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:learning_app_benaya_latest/bloc/bloc/login_bloc.dart';
+import 'package:learning_app_benaya_latest/data/repository/api_repository.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(BlocProvider(
+    create: (context) => LoginBloc(
+      ApiRepository(),
+    ),
+    child: const MyApp(),
+  ));
 }
 
 class MyApp extends StatelessWidget {
@@ -29,6 +37,10 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final TextEditingController _identifierController =
+      TextEditingController(text: 'admin');
+  final TextEditingController _passwordController =
+      TextEditingController(text: '12345678');
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -51,7 +63,29 @@ class _MyHomePageState extends State<MyHomePage> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const Spacer(),
+            //bloc builder untuk login page
+            BlocBuilder<LoginBloc, LoginState>(
+              builder: (context, state) {
+                if (state is LoginSuccess) {
+                  return Column(
+                    children: [
+                      Text(state.loginResponse.user!.username.toString()),
+                      Text(state.loginResponse.jwt.toString()),
+                    ],
+                  );
+                }
+                if (state is LoginFailed) {
+                  return Text(state.message);
+                }
+                if (state is LoginInProgress) {
+                  return const CircularProgressIndicator();
+                }
+                return const Text("");
+              },
+            ),
+            Spacer(),
             TextField(
+              controller: _identifierController,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
                 labelText: 'Identifier',
@@ -61,6 +95,8 @@ class _MyHomePageState extends State<MyHomePage> {
               height: 20,
             ),
             TextField(
+              controller: _passwordController,
+              obscureText: true,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
                 labelText: 'Password',
@@ -73,7 +109,12 @@ class _MyHomePageState extends State<MyHomePage> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  context.read<LoginBloc>().add(LoginButtonPressed(
+                        _identifierController.text,
+                        _passwordController.text,
+                      ));
+                },
                 style: ElevatedButton.styleFrom(
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.zero,
@@ -81,8 +122,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   backgroundColor: Colors.indigo,
                 ),
                 child: const Text(
-                  'Login',
-                  style: TextStyle(color: Colors.white),
+                  'LOGIN',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold),
                 ),
               ),
             ),
